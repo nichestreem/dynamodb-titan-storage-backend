@@ -15,6 +15,31 @@
  */
 package com.amazon.titan.graphdb.dynamodb;
 
+import java.util.*;
+
+import com.amazon.titan.diskstorage.dynamodb.BackendDataModel;
+import com.amazon.titan.diskstorage.dynamodb.TestCombination;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
+import com.thinkaurelius.titan.core.*;
+import com.thinkaurelius.titan.core.attribute.Cmp;
+import com.thinkaurelius.titan.core.attribute.Contain;
+import com.thinkaurelius.titan.graphdb.internal.Order;
+import com.thinkaurelius.titan.graphdb.types.StandardEdgeLabelMaker;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.junit.AfterClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+
+import com.amazon.titan.TestGraphUtil;
+import com.thinkaurelius.titan.diskstorage.BackendException;
+import com.thinkaurelius.titan.diskstorage.configuration.WriteConfiguration;
+import com.thinkaurelius.titan.graphdb.TitanGraphTest;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import static com.thinkaurelius.titan.graphdb.internal.RelationCategory.EDGE;
 import static com.thinkaurelius.titan.testutil.TitanAssert.assertCount;
 import static com.thinkaurelius.titan.testutil.TitanAssert.size;
@@ -25,60 +50,57 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
-
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
-import com.amazon.titan.diskstorage.dynamodb.BackendDataModel;
-import com.amazon.titan.testcategory.SingleItemTests;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
-import com.thinkaurelius.titan.core.EdgeLabel;
-import com.thinkaurelius.titan.core.PropertyKey;
-import com.thinkaurelius.titan.core.TitanEdge;
-import com.thinkaurelius.titan.core.TitanVertex;
-import com.thinkaurelius.titan.core.TitanVertexProperty;
-import com.thinkaurelius.titan.core.VertexList;
-import com.thinkaurelius.titan.core.attribute.Cmp;
-import com.thinkaurelius.titan.core.attribute.Contain;
-import com.thinkaurelius.titan.diskstorage.configuration.WriteConfiguration;
-import com.thinkaurelius.titan.graphdb.internal.Order;
-import com.thinkaurelius.titan.graphdb.types.StandardEdgeLabelMaker;
-
 /**
+ *
+ * FunctionalTitanGraphTest contains the specializations of the Titan functional tests required for
+ * the DynamoDB storage backend.
  *
  * @author Alexander Patrikalakis
  *
  */
-@Category({ SingleItemTests.class })
-public class SingleDynamoDBGraphTest extends AbstractDynamoDBGraphTest {
-    public SingleDynamoDBGraphTest()
-    {
-        super(BackendDataModel.SINGLE);
+@RunWith(Parameterized.class)
+public class DynamoDBGraphTest extends TitanGraphTest {
+    @Rule public TestName name = new TestName();
+
+    @Override
+    protected boolean isLockingOptimistic() {
+        return true;
+    }
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return TestCombination.PARAMETER_LIST;
+    }
+    private final TestCombination combination;
+    public DynamoDBGraphTest(TestCombination combination) {
+        this.combination = combination;
     }
 
     @Override
     public WriteConfiguration getConfiguration() {
-        final WriteConfiguration wc = super.getConfiguration();
         final String methodName = name.getMethodName();
-        if(methodName.contains("testEdgesExceedCacheSize")) {
+        final List<String> extraStoreNames = methodName.contains("simpleLogTest") ? Collections.singletonList("ulog_test") : Collections.<String>emptyList();
+        final WriteConfiguration result = TestGraphUtil.instance().graphConfigWithClusterPartitionsAndExtraStores(combination.getDataModel(),
+                extraStoreNames, 1 /*titanClusterPartitions*/);
+        result.set("storage.dynamodb.titan-locking", combination.getUsingTitanLocking().toString());
+        if (BackendDataModel.SINGLE == combination.getDataModel() && methodName.contains("testEdgesExceedCacheSize")) {
             //default: 20000, testEdgesExceedCacheSize fails at 16461, passes at 16460
             //this is the maximum number of edges supported for a vertex with no vertex partitioning.
-            wc.set("cache.tx-cache-size", 16460);
+            result.set("cache.tx-cache-size", 16460);
         }
-        return wc;
+        return result;
     }
 
     //begin titan-test code - modified to accommodate item size limit of SINGLE data model
     //https://github.com/thinkaurelius/titan/blob/0.5.4/titan-test/src/main/java/com/thinkaurelius/titan/graphdb/TitanGraphTest.java#L2481
-    @Test @Override
+    @Test
+    @Override
     @SuppressWarnings("deprecation")
     public void testVertexCentricQuery() {
+        if (combination.getDataModel() == BackendDataModel.MULTI) {
+            super.testVertexCentricQuery();
+            return;
+        }
         makeVertexIndexedUniqueKey("name", String.class);
         PropertyKey time = makeKey("time", Integer.class);
         PropertyKey weight = makeKey("weight", Double.class);
@@ -397,4 +419,9 @@ public class SingleDynamoDBGraphTest extends AbstractDynamoDBGraphTest {
 
     }
     //end titan-test code
+
+    @AfterClass
+    public static void deleteTables() throws BackendException {
+        TestGraphUtil.instance().cleanUpTables();
+    }
 }
