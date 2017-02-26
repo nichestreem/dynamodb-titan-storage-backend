@@ -15,8 +15,10 @@
 package com.amazon.titan.diskstorage.dynamodb;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import com.thinkaurelius.titan.diskstorage.configuration.ModifiableConfiguration;
 import org.junit.AfterClass;
 
 import com.amazon.titan.TestGraphUtil;
@@ -26,17 +28,24 @@ import com.thinkaurelius.titan.diskstorage.configuration.BasicConfiguration;
 import com.thinkaurelius.titan.diskstorage.configuration.WriteConfiguration;
 import com.thinkaurelius.titan.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /**
 *
 * @author Alexander Patrikalakis
 *
 */
-public abstract class AbstractDynamoDBMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
+@RunWith(Parameterized.class)
+public class DynamoDBMultiWriteStoreTest extends MultiWriteKeyColumnValueStoreTest {
 
-    protected final BackendDataModel model;
-    protected AbstractDynamoDBMultiWriteStoreTest(BackendDataModel model) {
-        this.model = model;
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return TestCombination.PARAMETER_LIST;
+    }
+    private final TestCombination combination;
+    public DynamoDBMultiWriteStoreTest(TestCombination combination) {
+        this.combination = combination;
     }
 
     @Override
@@ -44,9 +53,10 @@ public abstract class AbstractDynamoDBMultiWriteStoreTest extends MultiWriteKeyC
         final List<String> storeNames = new ArrayList<>(2);
         storeNames.add("testStore1");
         storeNames.add("testStore2");
-        final WriteConfiguration wc = TestGraphUtil.instance().getStoreConfig(model, storeNames);
-        final BasicConfiguration config = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, wc,
-            BasicConfiguration.Restriction.NONE);
+        final WriteConfiguration wc = TestGraphUtil.instance().getStoreConfig(combination.getDataModel(), storeNames);
+        final ModifiableConfiguration config = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, wc,
+                BasicConfiguration.Restriction.NONE);
+        config.set(Constants.DYNAMODB_USE_TITAN_LOCKING, combination.getUsingTitanLocking());
 
         return new DynamoDBStoreManager(config);
     }

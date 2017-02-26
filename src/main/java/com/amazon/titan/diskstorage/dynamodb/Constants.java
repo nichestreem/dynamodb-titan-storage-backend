@@ -61,21 +61,24 @@ public class Constants {
     public static final ConfigNamespace DYNAMODB_CLIENT_EXECUTOR_NAMESPACE = new ConfigNamespace(DYNAMODB_CLIENT_NAMESPACE, "executor", "DynamoDB client executor options", false /*isUmbrella*/);
     public static final ConfigNamespace DYNAMODB_CLIENT_CREDENTIALS_NAMESPACE = new ConfigNamespace(DYNAMODB_CLIENT_NAMESPACE, "credentials", "DynamoDB client credentials options", false /*isUmbrella*/);
 
-    public static final ConfigOption<String> DYNAMODB_TABLE_PREFIX = new ConfigOption<String>(DYNAMODB_CONFIGURATION_NAMESPACE, "prefix", //
+    public static final ConfigOption<String> DYNAMODB_TABLE_PREFIX = new ConfigOption<>(DYNAMODB_CONFIGURATION_NAMESPACE, "prefix", //
         "A prefix to put before the Titan table name. This allows clients to have multiple graphs on the same AWS DynamoDB account.", //
         ConfigOption.Type.FIXED, "titan");
-    public static final ConfigOption<String> DYNAMODB_METRICS_PREFIX = new ConfigOption<String>(DYNAMODB_CONFIGURATION_NAMESPACE, "metrics-prefix", //
+    public static final ConfigOption<String> DYNAMODB_METRICS_PREFIX = new ConfigOption<>(DYNAMODB_CONFIGURATION_NAMESPACE, "metrics-prefix", //
         "Prefix on the codahale metric names emitted by DynamoDBDelegate.", //
         ConfigOption.Type.MASKABLE, "dynamodb");
-    public static final ConfigOption<Boolean> DYNAMODB_ENABLE_PARALLEL_SCAN = new ConfigOption<Boolean>(DYNAMODB_CONFIGURATION_NAMESPACE, "enable-parallel-scans", //
+    public static final ConfigOption<Boolean> DYNAMODB_ENABLE_PARALLEL_SCAN = new ConfigOption<>(DYNAMODB_CONFIGURATION_NAMESPACE, "enable-parallel-scans", //
         "This feature enables scans to run in parallel, which should decrease the total blocking time spent when iterating over large sets of vertices. WARNING: while this feature is enabled Titan's OLAP libraries are NOT supported. The Fulgora implementations of OLAP rely on consistent scan orders across multiple scans, which cannot be guaranteed when scans are run in parallel", //
         ConfigOption.Type.MASKABLE, false);
-    public static final ConfigOption<String> STORES_DATA_MODEL = new ConfigOption<String>(Constants.DYNAMODB_STORES_NAMESPACE, "data-model", //
+    public static final ConfigOption<String> STORES_DATA_MODEL = new ConfigOption<>(Constants.DYNAMODB_STORES_NAMESPACE, "data-model", //
         "SINGLE Means that all the values for a given key are put into a single DynamoDB item. A SINGLE is efficient because all the updates for a single key can be done atomically. However, the tradeoff is that DynamoDB has a 400k limit per item so it cannot hold much data. MULTI Means that each 'column' is used as a range key in DynamoDB so a key can span multiple items. A MULTI implementation is slightly less efficient than SINGLE because it must use DynamoDB Query rather than a direct lookup. It is HIGHLY recommended to use MULTI for edgestore unless your graph has very low max degree.", //
         ConfigOption.Type.FIXED, BackendDataModel.MULTI.name());
-    public static final ConfigOption<Integer> STORES_SCAN_LIMIT = new ConfigOption<Integer>(Constants.DYNAMODB_STORES_NAMESPACE, "scan-limit", //
+    public static final ConfigOption<Integer> STORES_SCAN_LIMIT = new ConfigOption<>(Constants.DYNAMODB_STORES_NAMESPACE, "scan-limit", //
         "The maximum number of items to evaluate (not necessarily the number of matching items). If DynamoDB processes the number of items up to the limit while processing the results, it stops the operation and returns the matching values up to that point, and a key in LastEvaluatedKey to apply in a subsequent operation, so that you can pick up where you left off. Also, if the processed data set size exceeds 1 MB before DynamoDB reaches this limit, it stops the operation and returns the matching values up to the limit, and a key in LastEvaluatedKey to apply in a subsequent operation to continue the operation.", //
         ConfigOption.Type.MASKABLE, 10000);
+    public static final ConfigOption<Boolean> DYNAMODB_USE_TITAN_LOCKING = new ConfigOption<>(DYNAMODB_CONFIGURATION_NAMESPACE,
+            "titan-locking", "Set this to true if you need to use Titan's locking mechanism for remote lock expiry.", //
+            ConfigOption.Type.FIXED, false);
 
 //begin adaptation of the following block up until line 63
 //https://github.com/buka/titan/blob/master/src/main/java/com/thinkaurelius/titan/diskstorage/dynamodb/DynamoDBClient.java#L29

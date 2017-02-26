@@ -149,6 +149,12 @@
             <version>4.11</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.14</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- for Gremlin console -->
         <dependency>
             <groupId>org.apache.tinkerpop</groupId>

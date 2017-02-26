@@ -139,7 +139,10 @@ public class DynamoDBStoreManager extends DistributedStoreManager implements Key
         return name;
     }
 
+
     private StandardStoreFeatures initializeFeatures(Configuration config) {
+        final boolean doNotUseDynamoDbLocking = config.get(Constants.DYNAMODB_USE_TITAN_LOCKING);
+
         Builder builder = new StandardStoreFeatures.Builder();
         return builder.batchMutation(true)
                       .cellTTL(false)
@@ -147,7 +150,7 @@ public class DynamoDBStoreManager extends DistributedStoreManager implements Key
                       .keyConsistent(config)
                       .keyOrdered(false)
                       .localKeyPartition(false)
-                      .locking(true)
+                      .locking(false == doNotUseDynamoDbLocking)
                       .multiQuery(true)
                       .orderedScan(false)
                       .preferredTimestamps(TimestampProviders.MILLI) //ignored because timestamps is false

@@ -34,8 +34,7 @@ import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration;
 public abstract class AbstractDynamoDBIDAuthorityTest extends IDAuthorityTest {
 
     protected final BackendDataModel model;
-    protected AbstractDynamoDBIDAuthorityTest(WriteConfiguration baseConfig,
-            BackendDataModel model) {
+    AbstractDynamoDBIDAuthorityTest(WriteConfiguration baseConfig, BackendDataModel model) {
         super(TestGraphUtil.instance().appendStoreConfig(model, baseConfig.copy(), Collections.singletonList("ids")));
         this.model = model;
     }

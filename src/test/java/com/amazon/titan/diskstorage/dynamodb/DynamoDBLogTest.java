@@ -24,6 +24,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +37,8 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,11 +67,16 @@ import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration;
 * @author Alexander Patrikalakis
 *
 */
-public abstract class AbstractDynamoDBLogTest {
+@RunWith(Parameterized.class)
+public class DynamoDBLogTest {
 
-    protected final BackendDataModel model;
-    protected AbstractDynamoDBLogTest(BackendDataModel model) {
-        this.model = model;
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return TestCombination.PARAMETER_LIST;
+    }
+    private final TestCombination combination;
+    public DynamoDBLogTest(TestCombination combination) {
+        this.combination = combination;
     }
 
     public KeyColumnValueStoreManager openStorageManager() throws BackendException {
@@ -85,9 +93,10 @@ public abstract class AbstractDynamoDBLogTest {
         logNames.add("loner4");
         logNames.add("fuzz");
         logNames.add("testx");
-        final WriteConfiguration wc = TestGraphUtil.instance().getStoreConfig(model, logNames);
-        final BasicConfiguration config = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, wc,
-            BasicConfiguration.Restriction.NONE);
+        final WriteConfiguration wc = TestGraphUtil.instance().getStoreConfig(combination.getDataModel(), logNames);
+        final ModifiableConfiguration config = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, wc,
+                BasicConfiguration.Restriction.NONE);
+        config.set(Constants.DYNAMODB_USE_TITAN_LOCKING, combination.getUsingTitanLocking());
 
         return new DynamoDBStoreManager(config);
     }

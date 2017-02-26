@@ -14,6 +14,7 @@
  */
 package com.amazon.titan.diskstorage.dynamodb;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,27 +28,36 @@ import com.thinkaurelius.titan.diskstorage.configuration.BasicConfiguration;
 import com.thinkaurelius.titan.diskstorage.configuration.WriteConfiguration;
 import com.thinkaurelius.titan.diskstorage.keycolumnvalue.KeyColumnValueStoreManager;
 import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /**
  *
  * @author Alexander Patrikalakis
  *
  */
-public abstract class AbstractDynamoDBStoreTest extends KeyColumnValueStoreTest
+@RunWith(Parameterized.class)
+public class DynamoDBStoreTest extends KeyColumnValueStoreTest
 {
-    protected final BackendDataModel model;
-    protected AbstractDynamoDBStoreTest(BackendDataModel model) {
-        this.model = model;
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return TestCombination.PARAMETER_LIST;
     }
+    private final TestCombination combination;
+    public DynamoDBStoreTest(TestCombination combination) {
+        this.combination = combination;
+    }
+
     @Override
     public KeyColumnValueStoreManager openStorageManager() throws BackendException
     {
         final List<String> storeNames = Collections.singletonList("testStore1");
-        final WriteConfiguration wc = TestGraphUtil.instance().getStoreConfig(model, storeNames);
+        final WriteConfiguration wc = TestGraphUtil.instance().getStoreConfig(combination.getDataModel(), storeNames);
 
         if (name.getMethodName().equals("parallelScanTest")) {
             wc.set("storage.dynamodb." + Constants.DYNAMODB_ENABLE_PARALLEL_SCAN.getName(), "true");
         }
+        wc.set("storage.dynamodb.titan-locking", combination.getUsingTitanLocking().toString());
         final BasicConfiguration config = new BasicConfiguration(GraphDatabaseConfiguration.ROOT_NS, wc,
             BasicConfiguration.Restriction.NONE);
 

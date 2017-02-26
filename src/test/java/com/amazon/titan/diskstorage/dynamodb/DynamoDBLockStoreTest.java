@@ -16,11 +16,9 @@
 package com.amazon.titan.diskstorage.dynamodb;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.junit.After;
-import org.junit.Ignore;
 
 import com.amazon.titan.TestGraphUtil;
 import com.thinkaurelius.titan.diskstorage.BackendException;
@@ -29,20 +27,24 @@ import com.thinkaurelius.titan.diskstorage.configuration.BasicConfiguration;
 import com.thinkaurelius.titan.diskstorage.configuration.ModifiableConfiguration;
 import com.thinkaurelius.titan.diskstorage.configuration.WriteConfiguration;
 import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /**
 *
 * @author Alexander Patrikalakis
 *
 */
-public class AbstractDynamoDBLockStoreTest extends LockKeyColumnValueStoreTest {
+@RunWith(Parameterized.class)
+public class DynamoDBLockStoreTest extends LockKeyColumnValueStoreTest {
 
-    protected final BackendDataModel model;
-    private String concreteClassName;
-    protected AbstractDynamoDBLockStoreTest(BackendDataModel model) {
-        //TODO(amcp) make this protected in super
-        this.concreteClassName = getClass().getSimpleName();
-        this.model = model;
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        return TestCombination.PARAMETER_LIST;
+    }
+    private final TestCombination combination;
+    public DynamoDBLockStoreTest(TestCombination combination) {
+        this.combination = combination;
     }
 
     @Override
@@ -56,11 +58,13 @@ public class AbstractDynamoDBLockStoreTest extends LockKeyColumnValueStoreTest {
         storeNames.add("multi_store_lock_3");
         storeNames.add("multi_store_lock_4");
         storeNames.add("multi_store_lock_5");
-        final WriteConfiguration wc = TestGraphUtil.instance().getStoreConfig(model, storeNames);
+        final WriteConfiguration wc = TestGraphUtil.instance().getStoreConfig(combination.getDataModel(), storeNames);
         final ModifiableConfiguration config = new ModifiableConfiguration(GraphDatabaseConfiguration.ROOT_NS, wc,
             BasicConfiguration.Restriction.NONE);
+        final boolean titanLocking = combination.getUsingTitanLocking();
+        config.set(Constants.DYNAMODB_USE_TITAN_LOCKING, titanLocking);
         //BEGIN LockKeyColumnValueStoreTest code L115
-        config.set(GraphDatabaseConfiguration.LOCK_LOCAL_MEDIATOR_GROUP, concreteClassName + id);
+        config.set(GraphDatabaseConfiguration.LOCK_LOCAL_MEDIATOR_GROUP, combination.toString() + id);
         config.set(GraphDatabaseConfiguration.UNIQUE_INSTANCE_ID,"inst" + id);
         config.set(GraphDatabaseConfiguration.LOCK_RETRY,10);
         config.set(GraphDatabaseConfiguration.LOCK_EXPIRE, Duration.ofMillis(EXPIRE_MS));
@@ -74,9 +78,8 @@ public class AbstractDynamoDBLockStoreTest extends LockKeyColumnValueStoreTest {
         TestGraphUtil.instance().cleanUpTables();
     }
 
-    @Ignore
     @Override
-    public void testRemoteLockContention() {
+    public void testRemoteLockContention() throws InterruptedException, BackendException {
         //The DynamoDB Storage Backend for Titan does not support remote lock expiry currently.
         //Re-read the KeyColumns (edges, vertices, index entries) and retry.
         //If you enable a DynamoDB Stream on the store (table) and have a Lambda function
@@ -91,5 +94,10 @@ public class AbstractDynamoDBLockStoreTest extends LockKeyColumnValueStoreTest {
         //Lambda + Kinesis + KCL to the loop may add around 1sec to remote lock expiry latency.
         //This is partially quantifiable with the approximate time attribute added to Kinesis
         //record format recently.
+        if (!combination.getUsingTitanLocking()) { //
+            return;
+
+        }
+        super.testRemoteLockContention();
     }
 }
