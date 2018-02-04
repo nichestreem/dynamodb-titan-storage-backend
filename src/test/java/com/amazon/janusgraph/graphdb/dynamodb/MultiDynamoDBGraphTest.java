@@ -142,7 +142,7 @@ public class MultiDynamoDBGraphTest extends AbstractDynamoDBGraphTest {
     @Test
     @Override
     @Category({MultiDynamoDBGraphTestCategory.class, MultipleItemTestCategory.class })
-    public void testBasic() {
+    public void testBasic() throws BackendException {
         super.testBasic();
     }
 

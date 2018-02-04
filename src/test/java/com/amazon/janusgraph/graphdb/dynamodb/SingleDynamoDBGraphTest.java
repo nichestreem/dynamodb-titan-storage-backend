@@ -150,7 +150,7 @@ public class SingleDynamoDBGraphTest extends AbstractDynamoDBGraphTest {
     @Test
     @Override
     @Category({SingleDynamoDBGraphTestCategory.class, SingleItemTestCategory.class })
-    public void testBasic() {
+    public void testBasic() throws BackendException {
         super.testBasic();
     }
 
