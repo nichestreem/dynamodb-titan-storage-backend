@@ -2,14 +2,14 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.amazonaws</groupId>
     <artifactId>dynamodb-janusgraph-storage-backend</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
     <packaging>jar</packaging>
     <name>Amazon DynamoDB Storage Backend for JanusGraph</name>
     <url>https://github.com/awslabs/dynamodb-janusgraph-storage-backend</url>
     <description>The Amazon DynamoDB Storage Backend for JanusGraph: Distributed Graph Database allows JanusGraph graphs to use DynamoDB as a storage backend.</description>
     <scm>
         <url>git@github.com:awslabs/dynamodb-janusgraph-storage-backend.git</url>
-        <tag>jg0.2.0-1.2.0</tag>
+        <tag>jg0.3.0-1.3.0</tag>
     </scm>
     <properties>
         <default.test.jvm.opts>-Xms256m -Xmx1280m -XX:+HeapDumpOnOutOfMemoryError</default.test.jvm.opts>

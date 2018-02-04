@@ -14,7 +14,7 @@
 #!/bin/bash
 
 #
-# Copyright 2015-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2015-2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License").
 # You may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@
 # 2b) If you're running Ubuntu: update-rc.d gremlin-server defaults
 #
 # You have to SET the Gremlin Server installation directory here:
-SVR="/usr/local/packages/dynamodb-janusgraph-storage-backend-1.2.0"
+SVR="/usr/local/packages/dynamodb-janusgraph-storage-backend-1.3.0"
 SVR_LOG="/var/log/gremlin-server"
 # Specify the user to run Gremlin Server as:
 SVR_USER="ec2-user"
